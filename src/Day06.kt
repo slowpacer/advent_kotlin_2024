@@ -1,177 +1,300 @@
 fun main() {
-    Day05().execute()
+    val currentTime = System.currentTimeMillis()
+    Day06().execute()
+    println("time to solve ${System.currentTimeMillis() - currentTime}")
 }
 
-class Day05 : ContestDay<Pair<List<Pair<Int, Int>>, List<List<Int>>>, Int>("Day05") {
+class Day06 : ContestDay<List<CharArray>, Int>("Day06") {
 
-    override fun partOne(input: Pair<List<Pair<Int, Int>>, List<List<Int>>>): Int {
-        val ruleMap = mutableMapOf<Int, MutableSet<Int>>()
-        input.first.forEach { ruleMap.getOrPut(it.first, ::mutableSetOf).add(it.second) }
-        val updates = input.second
-        var sum = 0
-        var brokenUpdates = updates.size
-        updates.forEach { update ->
-            if (isValidUpdate(update, ruleMap)) {
-                brokenUpdates--
-                val midElement = update.lastIndex / 2
-                sum += update[midElement]
-            }
+    // needed for solution 1
+    private val visited = '*'
+    private val guardPositions = setOf('<', '>', '^', 'v')
+    private var uniqueMoves = 1
+
+    // needed for solution 2
+    val newObstacles = mutableSetOf<Pair<Int, Int>>()
+    val matchingEntryPoints = mutableMapOf<Int, MutableList<Pair<Int, Int>>>()
+    var doNotAddEntryPoints = false
+    var potentialObstaclesChecked = 0
+
+
+    override fun partOne(input: List<CharArray>): Int? {
+        var (startingCoordinates, direction) = findStartingPoint(input)
+        var (row, column) = startingCoordinates
+        while (withinMapBoundaries(row, column, input)) {
+            val (newCoordinates, newDirection) = makeAMove(row, column, input, direction, true)
+            row = newCoordinates.first
+            column = newCoordinates.second
+            direction = newDirection
         }
-        return sum
+//        for (i in input.indices) {
+//            for (j in input[i].indices) {
+//                kotlin.io.print(input[i][j])
+//            }
+//            kotlin.io.println()
+//        }
+
+        return uniqueMoves
     }
 
-    private fun isValidUpdate(update: List<Int>, ruleMap: Map<Int, MutableSet<Int>>): Boolean {
-        var amountOfIterations = 0
-        for (i in update.lastIndex downTo 1) {
-            for (j in i - 1 downTo 0) {
-                ruleMap[update[i]]?.let {
-                    if (it.contains(update[j])) {
-                        return false
-                    }
-                    amountOfIterations++
+    override fun partTwo(input: List<CharArray>): Int? {
+        doNotAddEntryPoints = true
+        var (startingCoordinates, direction) = findStartingPoint(input)
+        var (row, column) = startingCoordinates
+        val startingDirection = direction
+
+        // building obstacles along the route
+        while (withinMapBoundaries(row, column, input)) {
+            val hypotheticalDirection = changeDirection(direction)
+            val newObstacle = plantNewObstacle(hypotheticalDirection, row, column, input)
+            newObstacle?.let {
+                input[newObstacle.first][newObstacle.second] = '#'
+                potentialObstaclesChecked++
+                if (isThereALoop(startingCoordinates.first, startingCoordinates.second, startingDirection, input)) {
+                    newObstacles.add(newObstacle)
                 }
+                input[newObstacle.first][newObstacle.second] = '.'
             }
-//            println(amountOfIterations)
+
+            val (newCoordinates, newDirection) = makeAMove(row, column, input, direction)
+            row = newCoordinates.first
+            column = newCoordinates.second
+            direction = newDirection
         }
-        return true
-    }
-
-    override fun partTwo(input: Pair<List<Pair<Int, Int>>, List<List<Int>>>): Int {
-        val updates = input.second
-        var sum = 0
-        for (update in updates) {
-            val priority = buildPriority(update, input.first)
-
-            if (update != priority) {
-                sum += priority[priority.lastIndex/2]
-            }
-        }
-
-
-//        val rules = allRules.toMutableList()
-//        val rules = LinkedList(allRules.toMutableList())
-        // individual element approach
-//        var startingPoint = 0
-
-//        while (startingPoint < input.first.lastIndex) {
-//            var currentElementIndex = startingPoint
-//            for (i in currentElementIndex..rules.lastIndex) {
-//                if (ruleMap[rules[currentElementIndex]]?.contains(rules[i]) != true && ruleMap[rules[i]]?.contains(rules[currentElementIndex]) == true) {
-//                    val removed = rules.removeAt(i)
-//                    rules.add(currentElementIndex, removed)
-//                    currentElementIndex = i
-//                }
-//            }
-//            startingPoint++
-//        }
-
-//        while (startingPoint < rules.lastIndex) {
-//            var currentElementIndex = startingPoint
-//            for (i in currentElementIndex..rules.lastIndex) {
-//                if (ruleMap[rules[currentElementIndex]]?.contains(rules[i]) != true && ruleMap[rules[i]]?.contains(rules[currentElementIndex]) == true) {
-//                    val removed = rules.removeAt(i)
-//                    rules.add(currentElementIndex, removed)
-//                    currentElementIndex = i
-//                }
-//            }
-//            startingPoint++
-//        }
-        //bubble approach
-//        for (i in 0 until rules.lastIndex) {
-//            var noMoves = true
-//            for (j in 0 until rules.lastIndex) {
-//                if (ruleMap[rules[j + 1]]?.contains(rules[j]) != false) {
-//                    noMoves = false
-//                    val switcher = rules[j + 1]
-//                    rules[j + 1] = rules[j]
-//                    rules[j] = switcher
+//        while (guardIsVisible(row, column, input)) {
+//            val (newCoordinates, newDirection) = makeAMove(row, column, input, direction)
+//            row = newCoordinates.first
+//            column = newCoordinates.second
+//            direction = newDirection
+//            //check if we can make a loop
+//            val hypotheticalDirection = changeDirection(direction)
 //
-//                }
-//            }
-//            if (noMoves) {
-//                break
-//            }
+//            val entryPoints = matchingEntryPoints[hypotheticalDirection] ?: continue
+//            val newObstacle = plantNewObstacle(hypotheticalDirection, row, column, entryPoints)
+//            newObstacle?.let { newObstacles.add(it) }
+//
 //        }
-//        val rulesPriority = mutableMapOf<Int, Int>()
-//        priority.forEachIndexed { index, value -> rulesPriority[value] = index }
-//        val brokenUpdates = updates.filterNot { isValidUpdateByPriority(it, rulesPriority) }
-//        val fixedUpdates = brokenUpdates.map { update ->
-//            val fixedUpdate = update.sortedWith { a, b -> rulesPriority[a]!! - rulesPriority[b]!! }
-//            val midElement = fixedUpdate[fixedUpdate.lastIndex / 2]
-//            println("sum = $sum and middle element $midElement")
-//            sum += midElement
-//            fixedUpdate
-//        }
-
-        return sum
+        return newObstacles.size
     }
 
-    private fun buildPriority(updates: List<Int>, rules: List<Pair<Int, Int>>):List<Int> {
-        val ruleMap = mutableMapOf<Int, MutableSet<Int>>()
-        val relatedRules = rules.filter { it.first in updates && it.second in updates }
-        relatedRules.forEach {
-            ruleMap.getOrPut(it.first, ::mutableSetOf).add(it.second)
-            ruleMap.getOrPut(it.second, ::mutableSetOf)
+    private fun isThereALoop(row: Int, column: Int, direction: Int, input: List<CharArray>): Boolean {
+        val visited = mutableMapOf<Pair<Int, Int>, MutableList<Int>>()
+        var currentRow = row
+        var currentColumn = column
+        var currentDirection = direction
+        while (withinMapBoundaries(currentRow, currentColumn, input)) {
+            if (visited[currentRow to currentColumn]?.contains(currentDirection) == true) {
+                return true
+            }
+            visited.getOrPut(currentRow to currentColumn, ::mutableListOf).add(currentDirection)
+            val (newCoordinates, newDirection) = makeAMove(currentRow, currentColumn, input, currentDirection)
+            currentRow = newCoordinates.first
+            currentColumn = newCoordinates.second
+            currentDirection = newDirection
         }
+        return false
+    }
 
-        // solution with using a DAG and Khan's algorithm
-        // build graph
-        val DAG = ruleMap
-        val vertices = DAG.keys
-        val inDegree = mutableMapOf<Int, Int>()
-        val queue = ArrayDeque<Int>()
-        // building in degree
-        for (vertex in vertices) {
-            val edges = ruleMap[vertex]
-            inDegree[vertex] = inDegree.getOrDefault(vertex, 0)
-            edges?.takeIf { it.isNotEmpty() }?.let {
-                for (to in edges) {
-                    inDegree[to] = inDegree.getOrDefault(to, 0) + 1
+    private fun plantNewObstacle(
+        direction: Int, row: Int, column: Int, input: List<CharArray>
+    ): Pair<Int, Int>? {
+        val obstacle = when (direction) {
+            0 -> {
+                // we were going down
+                row + 1 to column
+            }
+
+            1 -> {
+                // we were going left
+                row to column - 1
+            }
+
+            2 -> {
+                // we were going up
+                row - 1 to column
+            }
+
+            3 -> {
+                // we were going right
+                row to column + 1
+            }
+
+            else -> 0 to 0
+        }
+        val (newRow, newColumn) = obstacle
+
+        if (!withinMapBoundaries(
+                newColumn, newRow, input
+            ) || input[newRow][newColumn] == '#' || input[newRow][newColumn] == '^'
+        ) {
+            return null
+        }
+        return obstacle
+    }
+
+//    private fun plantNewObstacle(
+//        direction: Int,
+//        row: Int,
+//        column: Int,
+//        matchingObstacles: List<Pair<Int, Int>>
+//    ): Pair<Int, Int>? {
+//        return when (direction) {
+//            0 -> {
+//                // we were going down
+//                matchingObstacles.find { it.first == row && it.second < column }?.let { row + 1 to column }
+//            }
+//
+//            1 -> {
+//                // we were going left
+//                matchingObstacles.find { it.second == column && it.first < row }?.let { row to column - 1 }
+//            }
+//
+//            2 -> {
+//                // we were going up
+//                matchingObstacles.find { it.first == row && it.second > column }?.let { row - 1 to column }
+//            }
+//
+//            3 -> {
+//                // we were going right
+//                matchingObstacles.find { it.second == column && it.first > row }?.let { row to column + 1 }
+//            }
+//
+//            else -> null
+//        }
+//    }
+
+    private fun withinMapBoundaries(col: Int, row: Int, matrix: List<CharArray>): Boolean {
+        return row >= 0 && matrix.size > row && col >= 0 && matrix[row].size > col
+    }
+
+//    private fun changeDirection(
+//        row: Int,
+//        column: Int,
+//        matrix: List<CharArray>,
+//        direction: Int
+//    ): Int {
+//        if (matrix[row][column] == '#') {
+//            // rotation happens here
+//            // 0 -> l
+//            // 1 -> up
+//            // 2 - right
+//            // 3 -> down
+//            return (direction + 1) % 4
+//        }
+//        return direction
+//    }
+
+    private fun changeDirection(
+        direction: Int
+    ): Int {
+        // rotation happens here
+        // 0 -> l
+        // 1 -> up
+        // 2 - right
+        // 3 -> down
+        return (direction + 1) % 4
+    }
+
+    private fun findStartingPoint(matrix: List<CharArray>): Pair<Pair<Int, Int>, Int> {
+        for (row in matrix.indices) {
+            for (column in matrix[row].indices) {
+                if (guardPositions.contains(matrix[row][column])) {
+                    return (row to column) to mapDirection(matrix[row][column])
+
                 }
             }
         }
-        // adding to queue
-        inDegree.filter { it.value == 0 }.forEach { queue.add(it.key) }
-        val priority = mutableListOf<Int>()
+        throw IllegalStateException("No position found")
+    }
 
-        while (queue.isNotEmpty()) {
-            val vertex = queue.removeFirst()
-            priority.add(vertex)
+    private fun mapDirection(direction: Char): Int {
+        return when (direction) {
+            '<' -> 0
+            '^' -> 1
+            '>' -> 2
+            'v' -> 3
+            else -> -1
 
-            ruleMap[vertex]?.forEach {
-                inDegree[it] = inDegree[it]!! - 1
-                if (inDegree[it]!! == 0) {
-                    queue.add(it)
+        }
+    }
+
+    /**
+     * @return new coordinates and direction
+     */
+    private fun makeAMove(
+        row: Int,
+        col: Int,
+        matrix: List<CharArray>,
+        direction: Int,
+        markVisited: Boolean = false,
+    ): Pair<Pair<Int, Int>, Int> {
+        var newDirection: Int
+        var newRow = row
+        var newCol = col
+        when (direction) {
+            0 -> {
+                newCol--
+                newDirection = moveToNewCell(newRow, newCol, matrix, direction, markVisited)
+                if (newDirection != direction) {
+                    newCol = col
                 }
             }
+
+            1 -> {
+                newRow--
+                newDirection = moveToNewCell(newRow, newCol, matrix, direction, markVisited)
+                if (newDirection != direction) {
+                    newRow = row
+                }
+            }
+
+            2 -> {
+                newCol++
+                newDirection = moveToNewCell(newRow, newCol, matrix, direction, markVisited)
+                if (newDirection != direction) {
+                    newCol = col
+                }
+
+            }
+
+            3 -> {
+                newRow++
+                newDirection = moveToNewCell(newRow, newCol, matrix, direction, markVisited)
+                if (newDirection != direction) {
+                    newRow = row
+                }
+
+            }
+
+            else -> throw IllegalStateException("Wrong direction")
         }
 
-
-        return priority
+        return ((newRow to newCol) to newDirection)
     }
 
-    private fun isValidUpdateByPriority(updates: List<Int>, rulesPriority: Map<Int, Int>): Boolean {
-        var highestPriority = -1
-        for (update in updates) {
-            val currentPriority = rulesPriority[update] ?: Int.MIN_VALUE
-            if (currentPriority > highestPriority) {
-                highestPriority = currentPriority
-            } else return false
-        }
-        return true
+    private fun moveToNewCell(
+        row: Int, col: Int, matrix: List<CharArray>, direction: Int, markVisited: Boolean = false
+    ): Int {
+        if (withinMapBoundaries(row, col, matrix)) {
+            if (matrix[row][col] == '#') {
+                // we need to know what was the entry point
+                if (!doNotAddEntryPoints) {
+                    matchingEntryPoints.getOrPut(direction, ::mutableListOf).add(row to col)
 
+                }
+                return changeDirection(direction)
+            } else if (matrix[row][col] == '.') {
+                if (markVisited) {
+                    matrix[row][col] = visited
+                }
+                uniqueMoves++
+            }
+        }
+        return direction
     }
 
-    override fun transformInput(input: List<String>): Pair<List<Pair<Int, Int>>, List<List<Int>>> {
-        val (rules, updates) = input.partition { it.contains('|') }
-        val pageRules = rules.map {
-            val (a, b) = it.split("|", limit = 2)
-            a.toInt() to b.toInt()
-        }
-        val pageUpdate = updates.toMutableList().apply { removeAt(0) }.map {
-            numberRegexp.findAll(it).map { match -> match.value.toInt() }.toList()
-        }
-        return pageRules to pageUpdate
+    override fun transformInput(input: List<String>): List<CharArray> {
+        return input.map { row -> row.toCharArray() }
     }
 
 }

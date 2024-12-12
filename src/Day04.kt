@@ -1,55 +1,105 @@
+import kotlin.math.abs
+
 fun main() {
-    Day03().execute()
+    Day04().execute()
 }
 
-class Day03 : ContestDay<String, Long>("Day03") {
+class Day04 : ContestDay<List<String>, Int>("Day04") {
 
-    private val allowed = "do()"
-    private val disallowed = "don't()"
+    val xmas = "XMAS"
+    val samx = xmas.reversed()
+    val chars = setOf('M', 'A', 'S')
+    val opposites = mapOf(
+        'M' to 'S',
+        'S' to 'M',
+        'X' to 'Y'
+    )
 
-    override fun partOne(input: String): Long? {
-        val potentialMultiplications = input.split("mul")
-        var product = 0L
-        for (i in 1..potentialMultiplications.lastIndex) {
-            val inputs = potentialMultiplications[i].split(",")
-            if (inputs.size == 1) {
-                continue
+    override fun partOne(input: List<String>): Int? {
+        val rows = input
+
+        val columns = mutableListOf<String>()
+        for (i in rows[0].indices) {
+            var column = buildString {
+                for (j in rows.indices) {
+                    append(rows[j][i])
+                }
             }
-            val firstNumber = if (inputs[0][0] == '(') inputs[0].substring(1).toLongOrNull() ?: 0 else 0
-            val secondNumber = inputs[1].substringBefore(")").toLongOrNull() ?: 0
-            product += firstNumber * secondNumber
+            columns.add(column)
         }
-        return product
 
+        val diagonals = mutableListOf<String>()
+        // \ diagonals
+        val amountOfDiagonals = 1 + (rows.size - xmas.length) * 2
+        var startingPoint = rows.size - xmas.length
+        var iterations = amountOfDiagonals
+        while (iterations > 0) {
+            val diagonal = buildString {
+                for (i in 0 until rows.size - abs(startingPoint)) {
+                    if (startingPoint < 0) {
+                        append(rows[i][abs(startingPoint) + i])
+                    } else {
+                        append(rows[startingPoint + i][i])
+                    }
+
+                }
+            }
+            diagonals.add(diagonal)
+            --startingPoint
+            iterations--
+        }
+
+        // / diagonals
+        iterations = amountOfDiagonals
+        startingPoint = rows.size - xmas.length
+        while (iterations > 0) {
+            val diagonal = buildString {
+                for (i in 0 until rows.size - abs(startingPoint)) {
+                    if (startingPoint < 0) {
+                        append(rows[i][rows.lastIndex + startingPoint - i])
+                    } else {
+                        append(rows[startingPoint + i][rows.lastIndex - i])
+                    }
+
+                }
+            }
+            diagonals.add(diagonal)
+            --startingPoint
+            iterations--
+        }
+        val allVariations = rows + columns + diagonals
+        val xmasRegex = xmas.toRegex()
+        val samxRegex = samx.toRegex()
+        val xmasCount = allVariations.sumOf { xmasRegex.findAll(it).count() + samxRegex.findAll(it).count() }
+
+        return xmasCount
     }
 
-    override fun partTwo(input: String): Long? {
-        val potentialMultiplications = input.split("mul")
-        var product = 0L
-        var operationAllowed = true
-        for (i in 0..potentialMultiplications.lastIndex) {
-            val inputs = potentialMultiplications[i].split(",")
-            if (inputs[0].contains(allowed) || inputs[0].contains(disallowed)) {
-                operationAllowed = inputs[0].contains(allowed) || !inputs[0].contains(disallowed)
-            }
-            if (inputs.size == 1) {
-                continue
-            }
-            val firstNumber = if (inputs[0][0] == '(') inputs[0].substring(1).toLongOrNull() ?: 0 else 0
-            val secondNumber = inputs[1].substringBefore(")").toLongOrNull() ?: 0
-            if (operationAllowed) {
-                product += firstNumber * secondNumber
-            }
-            val allowedIndex = potentialMultiplications[i].lastIndexOf(allowed)
-            val disallowedIndex = potentialMultiplications[i].lastIndexOf(disallowed)
-            if (allowedIndex != -1 || disallowedIndex != -1) {
-                operationAllowed = allowedIndex > disallowedIndex
+    override fun partTwo(input: List<String>): Int? {
+        // basically a BFS that looks through each possibility
+        val matrix = input.map { it.toCharArray() }
+        var xmasCount = 0
+        for (i in 1..matrix.lastIndex) {
+            for (j in 1..matrix[i].lastIndex) {
+                if (matrix[i][j] == 'A' && isX(matrix, i, j)) xmasCount++
             }
         }
-        return product
+        return xmasCount
     }
 
-    override fun transformInput(input: List<String>): String {
-        return input.joinToString()
+    private fun isX(matrix: List<CharArray>, i: Int, j: Int): Boolean {
+        if (i + 1 > matrix.lastIndex || i - 1 < 0) return false
+        if (j + 1 > matrix[i].lastIndex || j - 1 < 0) return false
+        val xmas =
+            opposites[matrix[i - 1][j - 1]] == matrix[i + 1][j + 1] && opposites[matrix[i - 1][j + 1]] == matrix[i + 1][j - 1]
+        return xmas
+
     }
+
+
+    override fun transformInput(input: List<String>): List<String> {
+        return input
+    }
+
+
 }
