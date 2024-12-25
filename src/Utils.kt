@@ -21,3 +21,10 @@ fun String.md5() = BigInteger(1, MessageDigest.getInstance("MD5").digest(toByteA
 fun Any?.println() = println(this)
 
 val numberRegexp = "\\d+".toRegex()
+
+// primitive benchmark
+inline fun measureTimeTaken(execution: () -> Unit) {
+    val currentTime = System.currentTimeMillis()
+    execution()
+    println("Time taken to solve ${System.currentTimeMillis() - currentTime}")
+}

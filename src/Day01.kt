@@ -12,7 +12,6 @@ class Day01 : ContestDay<Pair<List<Int>, List<Int>>, Int>("Day01") {
         var result = 0
         for (i in 0..firstList.lastIndex) {
             val diff = abs(firstList[i] - secondList[i])
-            println("${firstList[i]} - ${secondList[i]} = $diff")
             result += diff
 
         }

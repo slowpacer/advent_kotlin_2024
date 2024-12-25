@@ -5,7 +5,7 @@ fun main() {
 }
 
 class Day02 : ContestDay<List<List<Int>>, Int>("Day02") {
-    override fun partOne(input: List<List<Int>>): Int? {
+    override fun partOne(input: List<List<Int>>): Int {
         var safeRows = 0
         input.forEach { row ->
             var changedDirection = false

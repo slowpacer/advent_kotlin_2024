@@ -8,7 +8,6 @@ class Day04 : ContestDay<List<String>, Int>("Day04") {
 
     val xmas = "XMAS"
     val samx = xmas.reversed()
-    val chars = setOf('M', 'A', 'S')
     val opposites = mapOf(
         'M' to 'S',
         'S' to 'M',

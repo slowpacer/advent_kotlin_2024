@@ -1,9 +1,7 @@
 import java.util.*
 
 fun main() {
-    val currentTime = System.currentTimeMillis()
     Day08().execute()
-    println("time to solve ${System.currentTimeMillis() - currentTime}")
 }
 
 class Day08 : ContestDay<List<CharArray>, Int>("Day08") {
@@ -67,13 +65,17 @@ class Day08 : ContestDay<List<CharArray>, Int>("Day08") {
             }
         }
 
+//        printResultingMap(input)
+        return antiNodes + antennasAsAntiNodes.count()
+    }
+
+    private fun printResultingMap(input: List<CharArray>) {
         input.forEachIndexed { i, row ->
             print("\n")
             row.forEachIndexed { j, element ->
                 print(element)
             }
         }
-        return antiNodes + antennasAsAntiNodes.count()
     }
 
     private fun findAntiNodes(antennaA: Pair<Int, Int>, antennaB: Pair<Int, Int>, map: List<CharArray>): Int {

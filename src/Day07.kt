@@ -1,7 +1,5 @@
 fun main() {
-    val currentTime = System.currentTimeMillis()
     Day07().execute()
-    println("time to solve ${System.currentTimeMillis() - currentTime}")
 }
 
 class Day07 : ContestDay<List<Pair<Long, List<Long>>>, Long>("Day07") {
@@ -70,7 +68,6 @@ class Day07 : ContestDay<List<Pair<Long, List<Long>>>, Long>("Day07") {
         elements: List<Long>,
         cache: MutableMap<Long, Boolean> = mutableMapOf()
     ): Boolean {
-//        if (indexOfElement <= elements.lastIndex && currentSum > target) return false
         if (indexOfElement == elements.size) return currentSum == target
         val newIndex = indexOfElement + 1
         val currentSumFromAdding = currentSum + elements[indexOfElement]
@@ -82,7 +79,6 @@ class Day07 : ContestDay<List<Pair<Long, List<Long>>>, Long>("Day07") {
                 elements,
                 cache
             )
-        val currentSumFromMultiplication = currentSum * elements[indexOfElement]
         val multiplicationResult =
             if (currentSum > 0) matchesTheSumWithConcat(
                 target,
