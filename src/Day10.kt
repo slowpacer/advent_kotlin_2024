@@ -1,15 +1,13 @@
-import java.util.Queue
-
 typealias Matrix = List<List<Int>>
 typealias Coordinates = Pair<Int, Int>
-typealias Route = Pair<Int, Int>
+typealias PeaksWithRoutes = Pair<Int, MutableSet<Coordinates>>
 
 fun main() {
     Day10().execute()
 }
 
 
-class Day10 : ContestDay<List<List<Int>>, Int>("Day10_test") {
+class Day10 : ContestDay<List<List<Int>>, Int>("Day10") {
 
     override fun transformInput(input: List<String>): List<List<Int>> {
         return input.map { it.toCharArray().map { charNum -> charNum - '0' } }
@@ -26,26 +24,38 @@ class Day10 : ContestDay<List<List<Int>>, Int>("Day10_test") {
             }
         }
 
-        return entryPoints.sumOf { pathVariations(it, input) }
+        val variations = entryPoints.map { pathVariations(it, input) }
+        val uniquePeaks = variations.sumOf { it.second.size }
+        return uniquePeaks
     }
 
     private fun pathVariations(
         entry: Pair<Int, Int>,
         matrix: List<List<Int>>,
-        nextStop: Int = 0
-    ): Int {
-        if (nextStop == 9) return 1
-        var uniqueRoutes = 0
+        nextStop: Int = 0,
+        routesCache: MutableMap<Coordinates, PeaksWithRoutes> = mutableMapOf(),
+    ): PeaksWithRoutes {
+        if (nextStop == 9) {
+            return 1 to mutableSetOf(entry)
+        }
+        var uniqueRoutes = 0 to mutableSetOf<Coordinates>()
         val nextSteps = matrix.exploreSteps(entry, nextStop + 1)
         if (nextSteps.isNotEmpty()) {
             nextSteps.forEach { step ->
-                uniqueRoutes += pathVariations(step, matrix, nextStop + 1)
+                uniqueRoutes += routesCache[step] ?: pathVariations(step, matrix, nextStop + 1, routesCache).apply {
+                    routesCache[step] = this
+                }
+
             }
         }
         return uniqueRoutes
     }
 
+    infix operator fun PeaksWithRoutes.plus(other: PeaksWithRoutes): PeaksWithRoutes {
+        return this.first + other.first to this.second.apply { addAll(other.second) }
+    }
 }
+
 
 private fun Matrix.exploreSteps(standingAt: Coordinates, nextStep: Int): List<Coordinates> {
     val potentialNextSteps = matchingSteps(standingAt)
