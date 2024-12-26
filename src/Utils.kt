@@ -28,3 +28,6 @@ inline fun measureTimeTaken(execution: () -> Unit) {
     execution()
     println("Time taken to solve ${System.currentTimeMillis() - currentTime}")
 }
+
+fun <E> List<List<E>>.withinBounds(i: Int, j: Int) =
+    i >= 0 && i <= this.lastIndex && j >= 0 && j <= this[i].lastIndex
