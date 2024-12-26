@@ -25,6 +25,7 @@ class Day10 : ContestDay<List<List<Int>>, Int>("Day10") {
         }
 
         val variations = entryPoints.map { pathVariations(it, input) }
+        val waysToGetThere = variations.sumOf { it.first }
         val uniquePeaks = variations.sumOf { it.second.size }
         return uniquePeaks
     }
